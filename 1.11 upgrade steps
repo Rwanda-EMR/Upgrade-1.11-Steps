@@ -1,0 +1,39 @@
+1. Import the 1.11 databases
+2. Start OpenMRS 2.3.3 (...with all the modules) on the 1.11 database to have it upgraded
+3. Source the global properties backup file (...it has no drop table and uses REPLACE INTO instead of INSERT INTO)
+4. Source the metadata backup file (...it has no drop table and uses REPLACE INTO instead of INSERT INTO)
+5. Run the post migration script (...it is a modified version of the post migration scrip used to upgrade OpenMRS 1.9)
+
+6. If the Regimen portlet refuses to load, run the following query to see if there are drugs that are pointing to non existing concepts
+
+   select concept_id from drug where concept_id not in (select concept_id from concept);
+
+mysql> select concept_id,name from drug where concept_id not in (select concept_id from concept);
++------------+----------------------------------------------------+
+| concept_id | name                                               |
++------------+----------------------------------------------------+
+|       8863 | FORLAX PDER SACHET 10g                             |
+|       8936 | OTIPAX GOUTTES AURICULAIRES (PHENASONE+LIDOCAINE)  |
++------------+----------------------------------------------------+
+
+7. Search for the actual concepts and use their IDs to update the drugs
+
+mysql> update drug set concept_id = 8862 where drug_id = 663;
+Query OK, 1 row affected (0,10 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> update drug set concept_id = 11176 where drug_id = 764;
+Query OK, 1 row affected (0,15 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+8. For order extension module to sart, execute the following query and uplaod a new version of the orderextension module
+   
+   delete from liquibasechangelog where ID like 'orderextension%';
+   
+   Then restart tomcat (sudo service tomcat8 restart)
+
+ 
+
+
+
+
